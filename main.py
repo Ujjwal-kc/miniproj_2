@@ -28,5 +28,5 @@ else:
             title = product.find('img')
             price = product.find('p','price_color')
             rating = product.find('p', class_='star-rating')
-            csvWriter.writerow([f"{title['alt']}, {price.get_text()}, {rating['class'][1]}"])
+            csvWriter.writerow([title['alt'], price.get_text(), rating['class'][1]])
 
