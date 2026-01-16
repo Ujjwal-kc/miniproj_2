@@ -1,32 +1,57 @@
 import requests
 from bs4 import BeautifulSoup
 import csv
+from urllib.parse import urljoin
+
+BASE_URL = 'https://books.toscrape.com/'
+
+def is_site_available(BASE_URL):
+
+    try:
+        response = requests.get(BASE_URL)
+        if response.status_code == 200:
+            return response
+        else:
+            print(f'Failed to fetch website {response.status_code}')
+            return None
+    except requests.exceptions.RequestException as err:
+        print(f'Error Occured {err}')
+        return None
 
 
-url = 'https://books.toscrape.com/'
+response = is_site_available(BASE_URL)
 
-response = requests.get(url)
 
-getStatusCode = response.status_code
+url_paths = []
 
-fileName = 'books.csv'
 
-if getStatusCode != 200:
-    print('Failed to fetch the website')
-else:
+def get_paths(response):
+
     soup = BeautifulSoup(response.content, 'html.parser')
-    products = soup.find_all('article', class_='product_pod')
+    
 
-    with open(fileName, 'w') as csvFile:
-
-        headers = ['Book Name','Price','Rating']
+    while True:
         
-        csvWriter = csv.writer(csvFile)
-        csvWriter.writerow(headers)
+        next_btn = soup.find('li', class_='next')
 
-        for product in products:
-            title = product.find('img')
-            price = product.find('p','price_color')
-            rating = product.find('p', class_='star-rating')
-            csvWriter.writerow([title['alt'], price.get_text(), rating['class'][1]])
+        if not next_btn:
+            break;
+
+            
+        path = next_btn.find('a')['href']
+        url_paths.append(path)
+
+        next_url = urljoin(response.url,path)
+
+        response = requests.get(next_url)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+
+
+get_paths(response)
+print(url_paths)
+
+
+
+
 
